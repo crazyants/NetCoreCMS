@@ -1,0 +1,164 @@
+﻿@inject UserManager<NccUser> UserManager
+@{ 
+    long UserId = 0;
+    string UserName = "";
+    try
+    {
+        UserId = Convert.ToInt64(UserManager.GetUserId(User));
+        UserName = UserManager.GetUserName(User);
+    }
+    catch (Exception)
+    {
+        UserId = 0;
+    }
+    var authorText = _T["Author"];
+    var dateText = _T["Date"];
+}
+    @model NccPost
+<div class="" id="CommentsSection">
+    <h4>@_T["Comments"] (@Model.Comments.Where(x=>x.CommentStatus==NccComment.NccCommentStatus.Approved).Count())</h4>
+    <div id="PreviousComments">
+        @*@foreach (var item in Model.Comments)
+        {
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    @item.Content
+                    <hr />
+                    <p style="font-style:italic; font-size:12px; margin-top: -18px;">
+                        <strong>@_T["Author"]:</strong>
+                        @if (item.AuthorName == null || item.AuthorName.Trim() == "")
+                        { <span>@_T["Anonymous"]</span>}
+                        else
+                        { <span>@item.AuthorName</span>}
+                        <span> | <strong>@_T["Date"]:</strong> @item.CreationDate.ToString("mmm dd, yyyy hh:mm tt")</span>
+                    </p>
+                </div>
+            </div>
+        }*@
+    </div>
+    <div class="panel panel-primary" id="NewComments" style="display:none;">
+        <div class="panel-body">
+            <h4 style="text-align:center;">@_T["New Comment"]</h4>
+            <hr />
+            <form id="createComments" class="form-horizontal" asp-controller="" asp-action="" method="">
+                <input type="hidden" name="PostId" id="PostId" value="@Model.Id" />
+                @if (UserId > 0)
+                {
+                    <div class="form-group">
+                        <label class="col-md-2 text-right">@_T["Name"] </label>
+                        <div class="col-md-5">
+                            @UserName
+                        </div>
+                    </div>
+
+                    <input type="hidden" class="form-control" name="AuthorName" id="AuthorName" value="@UserName" />
+                    <input type="hidden" class="form-control" name="Email" id="Email" value="" />
+                    <input type="hidden" class="form-control" name="Website" id="Website" value="" />
+                }
+                else
+                {
+                    <div class="form-group">
+                        <label class="col-md-2 text-right">@_T["Name"] </label>
+                        <div class="col-md-5">
+                            <input type="text" class="form-control" name="AuthorName" id="AuthorName" required />
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-md-2 text-right">@_T["Email"] </label>
+                        <div class="col-md-5">
+                            <input type="email" class="form-control" name="Email" id="Email" required />
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-md-2 text-right">@_T["Web"] </label>
+                        <div class="col-md-5">
+                            <input type="url" class="form-control" name="Website" id="Website" />
+                        </div>
+                    </div>
+                }
+                <div class="form-group">
+                    <label class="col-md-2 text-right">@_T["Comments"] </label>
+                    <div class="col-md-9">
+                        <textarea class="form-control" name="Comments" id="Comments" required></textarea>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-md-11 text-center">
+                        <button type="submit" id="Submit" class="btn btn-primary" onclick="postComment()">@_T["Submit"]</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function () {
+        loadComments();
+        $("#NewComments").show();
+        $('#createComments').on('submit', function (e) {
+            // validation code here
+            e.preventDefault();
+            var postId = $("#PostId").val();
+            var comments = $("#Comments").val();
+            var authorName = $("#AuthorName").val();
+            var email = $("#Email").val();
+            var website = $("#Website").val();
+            console.log(Comments);
+
+            NccPageMask.ShowLoadingMask();
+            $.ajax({
+                method: 'POST',
+                url: '/Comments/PostComments',
+                data: { postId: postId, comments: comments, authorId: @UserId, authorName: authorName, email: email, website: website },
+                success: function (rsp) {
+                    NccPageMask.HideLoadingMask();
+                    console.log(rsp);
+                    NccGlobalAlert.ShowSuccess(rsp.message);
+                    $("#Comments").val("");
+                    if (@UserId==0) {
+                        $("#AuthorName").val("");
+                    }
+                    $("#Email").val("");
+                    $("#Website").val("");
+                    loadComments();
+                    //$(clonedDiv).attr("data-website-widget-id", rsp.data.id);
+                    //setTimeout(function () {
+                    //    //window.location.reload(1);
+                    //    window.location.href = window.location.pathname + "?sLayout=" + layout;
+                    //}, 500);
+                },
+                error: function (rsp) {
+                    NccPageMask.HideLoadingMask();
+                    NccGlobalAlert.ShowError("Error occoured. Please try again after refresh the page.");
+                }
+            });
+        });
+    });
+    function loadComments() {
+
+        $.ajax({
+            method: 'POST',
+            url: '/Comments/GetComments',
+            data: { postId: @Model.Id },
+            success: function (rsp) {
+                console.log(rsp);
+                $('#PreviousComments').html('');
+                $.each(rsp.Data, function (i, item) {
+                    var d = new Date(item["CreationDate"]);
+                    var month = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+                    var date = d.getDate() + " " + month[d.getMonth()] + ", " + d.getFullYear();
+                    var time = d.toLocaleTimeString().toLowerCase().replace(/([\d]+:[\d]+):[\d]+(\s\w+)/g, "$1$2");
+
+                    console.log(date + " at " + time);
+                    $("#PreviousComments").append("<div class='panel panel-default'><div class='panel-body'>" + item["Content"] + "<hr /><p style='font-style:italic; font-size:12px; margin-top: -18px;'><strong>" + '@authorText' + ":</strong> " + item["AuthorName"] + "<span> | <strong>" + '@dateText' + ":</strong> " + date + " at " + time + "</span></p></div></div>");
+                });
+            },
+            error: function (rsp) {
+                console.log(rsp);
+                NccGlobalAlert.ShowError("Error occoured. Please try again after refresh the page.");
+            }
+        });
+    }
+</script>

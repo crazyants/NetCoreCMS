@@ -7,8 +7,6 @@
 
 @using NetCoreCMS.Core.Modules.Cms
 @using NetCoreCMS.Core.Modules.Cms.Models
-@using NetCoreCMS.Core.Modules.Cms.Models.AccountViewModels
-@using NetCoreCMS.Core.Modules.Cms.Models.ManageViewModels
 @using NetCoreCMS.Core.Modules.Cms.Controllers
 
 @using NetCoreCMS.Framework.Utility
@@ -17,13 +15,16 @@
 @using NetCoreCMS.Framework.Modules.Widgets
 @using NetCoreCMS.Framework.Core.Models
 @using NetCoreCMS.Framework.Core.Mvc.Views
+@using NetCoreCMS.Framework.Core.Mvc.Attributes
 @using NetCoreCMS.Framework.i18n
 @using NetCoreCMS.Framework.Core.Mvc.Views.TagHelpers
 @using NetCoreCMS.Modules.Cms.Models.ViewModels;
 @using NetCoreCMS.Modules.Cms.Lib;
 
-@inject IStringLocalizer _T
 @inject NccLanguageDetector LanguageDetector
 
 @addTagHelper *, NetCoreCMS.Framework
 @addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+
+
+@using NetCoreCMS.Framework.Core.Models.ViewModels

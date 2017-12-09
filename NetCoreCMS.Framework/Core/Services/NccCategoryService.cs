@@ -33,9 +33,19 @@ namespace NetCoreCMS.Framework.Core.Services
             return _entityRepository.Get(entityId, isAsNoTracking, new List<string>() { "CategoryDetails", "Parent" });
         }
 
+        public NccCategory GetBySlug(string slug)
+        {
+            return _entityRepository.GetBySlug(slug);
+        }
+
         public List<NccCategory> LoadAll(bool isActive = true, int status = -1, string name = "", bool isLikeSearch = false)
         {
             return _entityRepository.LoadAll(isActive, status, name, isLikeSearch, new List<string>() { "CategoryDetails", "Parent" });
+        }
+
+        public List<NccCategory> LoadAllWithPost(bool isActive = true, int status = -1, string name = "", bool isLikeSearch = false)
+        {
+            return _entityRepository.LoadAll(isActive, status, name, isLikeSearch, new List<string>() { "CategoryDetails", "Parent", "Posts" });
         }
 
         public NccCategory Save(NccCategory entity)
@@ -88,7 +98,7 @@ namespace NetCoreCMS.Framework.Core.Services
             copyTo.ModificationDate = copyFrom.ModificationDate;
             copyTo.ModifyBy = copyFrom.ModifyBy;
             copyTo.Name = copyFrom.Name;
-            copyTo.Status = copyFrom.Status;            
+            copyTo.Status = copyFrom.Status;
             copyTo.CategoryImage = copyFrom.CategoryImage;
             copyTo.Parent = copyFrom.Parent;
             copyTo.VersionNumber = copyFrom.VersionNumber;
@@ -100,12 +110,12 @@ namespace NetCoreCMS.Framework.Core.Services
             foreach (var item in copyFrom.CategoryDetails)
             {
                 var tmpCategoryDetails = copyTo.CategoryDetails.Where(x => x.Language == item.Language).FirstOrDefault();
-                if(tmpCategoryDetails == null)
+                if (tmpCategoryDetails == null)
                 {
                     tmpCategoryDetails = new NccCategoryDetails();
                     copyTo.CategoryDetails.Add(tmpCategoryDetails);
                 }
-                
+
                 tmpCategoryDetails.Language = item.Language;
                 tmpCategoryDetails.MetaDescription = item.MetaDescription;
                 tmpCategoryDetails.MetaKeyword = item.MetaKeyword;
@@ -119,7 +129,7 @@ namespace NetCoreCMS.Framework.Core.Services
                 tmpCategoryDetails.Metadata = item.Metadata;
             }
         }
-        
+
         public List<NccCategory> LoadByParrentId(long parrentId, bool isActive = true)
         {
             return _entityRepository.LoadByParrentId(parrentId, isActive);
@@ -128,6 +138,32 @@ namespace NetCoreCMS.Framework.Core.Services
         public NccCategory GetWithPost(string slug)
         {
             return _entityRepository.GetWithPost(slug);
+        }
+
+        /// <summary>
+        /// Use this function to count post
+        /// </summary>
+        /// <param name="isActive">Load active records</param>
+        /// <param name="keyword">To load by keyword(search in title)</param>
+        /// <returns></returns>
+        public long Count(bool isActive, string keyword = "")
+        {
+            return _entityRepository.Count(isActive, keyword);
+        }
+
+        /// <summary>
+        /// Use this function to lead post
+        /// </summary>
+        /// <param name="from">Starting index Default 0</param>
+        /// <param name="total">Total record you want</param>
+        /// <param name="isActive">Load active records</param>
+        /// <param name="keyword">To load by keyword(search in title)</param>
+        /// <param name="orderBy">Order by column name</param>
+        /// <param name="orderDir">Order direction (asc / desc)</param>
+        /// <returns></returns>
+        public List<NccCategory> Load(int from, int total, bool isActive, string keyword = "", string orderBy = "", string orderDir = "")
+        {
+            return _entityRepository.Load(from, total, isActive, keyword, orderBy, orderDir);
         }
     }
 }

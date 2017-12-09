@@ -8,10 +8,12 @@
  *          License: BSD-3-Clause                            *
  *************************************************************/
 
+using System;
 using NetCoreCMS.Framework.Core.Mvc.Models;
 
 namespace NetCoreCMS.Framework.Core.Models
 {
+    [Serializable]
     public class NccComment : BaseModel<long>
     { 
         public string Title { get; set; }
@@ -23,16 +25,14 @@ namespace NetCoreCMS.Framework.Core.Models
         public string AuthorName { get; set; }
         public string Email { get; set; }
         public string WebSite { get; set; }
-        public Status CommentStatus { get; set; }
+        public NccCommentStatus CommentStatus { get; set; }
 
-        public enum Status
+        public enum NccCommentStatus
         {
-            New,
+            Pending,
             Approved,
             Rejected,
             Spam
         }
-    }
-
-    
+    } 
 }

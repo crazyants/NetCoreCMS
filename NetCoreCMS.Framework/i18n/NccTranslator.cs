@@ -14,11 +14,14 @@ using Newtonsoft.Json;
 using System.Linq;
 using System.Collections.Generic;
 using System;
-
+using NetCoreCMS.Framework.Utility;
+using NetCoreCMS.Framework.Core;
+using System.Reflection;
+using NetCoreCMS.Framework.Resources;
 
 namespace NetCoreCMS.Framework.i18n
 {
-    public sealed class NccTranslator<T> : INccTranslator<T>
+    public sealed class NccTranslator : INccTranslator
     {
         private string _fileName;
         private string _resourceFilePath;
@@ -33,24 +36,27 @@ namespace NetCoreCMS.Framework.i18n
         }
 
         private NccTranslator() {}
-
+        
         public NccTranslator(string cultureCode)
         {
-            GetTranslator(typeof(T), cultureCode);
+            GetTranslator(cultureCode);         
         }
 
-        public NccTranslator<T> GetTranslator(Type resourceType, string cultureCode) {
+        public INccTranslator GetTranslator(string cultureCode) {
             
             _cultureCode = cultureCode;
 
             if (string.IsNullOrEmpty(cultureCode) || cultureCode.ToLower().Equals("en"))
                 return this;
 
-            var assembly = resourceType.Assembly;
-            var fileInfo = new FileInfo(assembly.Location);            
-            var path = Path.Combine(fileInfo.DirectoryName, "Resources");
+            var path = Path.Combine(GlobalContext.ContentRootPath, "bin", "Debug", "netcoreapp2.0", "Resources");
 
-            _fileName = resourceType.Namespace+"."+resourceType.Name+ "."+cultureCode+".lang";
+            if (RuntimeUtil.IsRelease(typeof(SharedResource).Assembly))
+            {
+                path = Path.Combine(GlobalContext.ContentRootPath, "bin", "Release", "netcoreapp2.0", "Resources");
+            }
+            
+            _fileName = "NccTranslationFile."+cultureCode+".lang";
             _resourceFilePath = Path.Combine(path, _fileName);
 
             if (!File.Exists(_resourceFilePath))
@@ -63,14 +69,18 @@ namespace NetCoreCMS.Framework.i18n
             }
 
             var translationFileData = File.ReadAllText(_resourceFilePath);
-            if (string.IsNullOrEmpty(translationFileData))
+            if (string.IsNullOrWhiteSpace(translationFileData))
             {
-                translationFileData = JsonConvert.SerializeObject(new NccTranslationFile() {
-                    Translations = new Dictionary<string, string>() { { "FileName", _fileName }, { "Type", resourceType.Name } }
-                }, Formatting.Indented );
-                File.WriteAllText(_resourceFilePath, translationFileData);
+                var assembly = typeof(SharedResource).GetTypeInfo().Assembly;
+                using (Stream resource = assembly.GetManifestResourceStream("NetCoreCMS.Framework.Resources.SharedResource.lang")) {
+                    var sr = new StreamReader(resource);
+                    translationFileData = sr.ReadToEndAsync().Result;                   
+                }
             }
+
+            File.WriteAllText(_resourceFilePath, translationFileData);
             _translationFile = JsonConvert.DeserializeObject<NccTranslationFile>(translationFileData);
+
             return this;
         }
 

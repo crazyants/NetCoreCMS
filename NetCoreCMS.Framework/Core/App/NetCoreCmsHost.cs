@@ -31,15 +31,14 @@ namespace NetCoreCMS.Framework.Core.App
         public static IServiceProvider ServiceProvider { get; set; }
 
         private static bool _isShutdown = false;
-        private static int _heartBit = 2000;
-        
+        private static int _heartBit = 2000;        
         private static Thread _starterThread;
         
         public static void StartForerver(Thread starterThread, ParameterizedThreadStart webHostStarter, string currentDirectory, string[] args)
         { 
             AppRootDirectory = currentDirectory;            
             _starterThread = starterThread;
-
+            
             try
             {
                 if (_starterThread.ThreadState == ThreadState.Unstarted)
@@ -84,7 +83,7 @@ namespace NetCoreCMS.Framework.Core.App
         {
             try
             {
-                Mediator?.Send(
+                Mediator?.SendAll(
                     new OnAppActivity(
                         new AppActivity() {
                             ActivityType = started,

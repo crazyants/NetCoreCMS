@@ -355,6 +355,8 @@ namespace NetCoreCMS.Framework.Migrations
 
                     b.Property<string>("ModuleId");
 
+                    b.Property<bool>("IsCore");
+
                     b.Property<int>("ModuleStatus");
 
                     b.Property<string>("ModuleTitle");
@@ -577,6 +579,8 @@ namespace NetCoreCMS.Framework.Migrations
                     b.Property<int>("PostType");
 
                     b.Property<DateTime>("PublishDate");
+
+                    b.Property<long>("CommentCount");
 
                     b.Property<string>("RelatedPosts");
 
@@ -929,6 +933,10 @@ namespace NetCoreCMS.Framework.Migrations
                     b.Property<string>("TimeZone");
 
                     b.Property<int>("VersionNumber");
+
+                    b.Property<string>("TablePrefix");
+
+                    b.Property<bool>("EnableCache");
 
                     b.HasKey("Id");
 

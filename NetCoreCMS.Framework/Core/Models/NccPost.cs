@@ -14,6 +14,7 @@ using NetCoreCMS.Framework.Core.Mvc.Models;
 
 namespace NetCoreCMS.Framework.Core.Models
 {
+    [Serializable]
     public class NccPost : BaseModel<long>
     {
         public NccPost()
@@ -31,6 +32,7 @@ namespace NetCoreCMS.Framework.Core.Models
         public string Layout { get; set; }
         public string RelatedPosts { get; set; }
         public DateTime PublishDate { get; set; }
+        public long CommentCount { get; set; }
 
         public NccPost Parent { get; set; }
         public NccUser Author { get; set; }

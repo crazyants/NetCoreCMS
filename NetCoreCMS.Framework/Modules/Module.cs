@@ -18,6 +18,7 @@ using NetCoreCMS.Framework.Core.Services;
 using NetCoreCMS.Framework.Core.Data;
 using NetCoreCMS.Framework.Core.Models;
 using Newtonsoft.Json;
+using NetCoreCMS.Framework.Core.Models.ViewModels;
 
 namespace NetCoreCMS.Framework.Modules
 {
@@ -27,6 +28,7 @@ namespace NetCoreCMS.Framework.Modules
         
         public string Id { get; set; }
         public string ModuleId { get; set; }
+        public bool IsCore { get; set; }
         public string ModuleTitle { get; set; }
         public string Author { get; set; }
         public string Email { get; set; }
@@ -44,13 +46,17 @@ namespace NetCoreCMS.Framework.Modules
         public string SortName { get; set; }
         public string Path { get; set; }
         public string Folder{ get; set; }
+        public string TablePrefix { get; set; }
         public string AssemblyPath { get; set; }
         public int ModuleStatus { get; set; }
  
         public List<Widget> Widgets { get { return _widgets; } set { _widgets = value; } }
-        
+
+        public List<Menu> Menus { get; set; }
+
         public Module()
         {
+            Menus = new List<Menu>();
             _widgets = new List<Widget>();            
         }
 

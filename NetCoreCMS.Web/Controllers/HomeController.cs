@@ -26,6 +26,10 @@ using NetCoreCMS.Framework.Setup;
 using NetCoreCMS.Framework.Core.Mvc.Controllers;
 using NetCoreCMS.Framework.Core.Messages;
 using System.Collections.Generic;
+using NetCoreCMS.Framework.Resources;
+using NetCoreCMS.Framework.Core.Models;
+using System.Linq;
+using NetCoreCMS.Framework.Core.Services;
 
 namespace NetCoreCMS.Web.Controllers
 {
@@ -33,20 +37,19 @@ namespace NetCoreCMS.Web.Controllers
     public class HomeController : NccController
     {
         IHostingEnvironment _env;
-        private readonly IStringLocalizer<SharedResource> _sharedLocalizer;
 
-        public HomeController(IHostingEnvironment env, ILoggerFactory factory, IStringLocalizer<SharedResource> sharedLocalizer)
+        public HomeController(IHostingEnvironment env, ILoggerFactory factory)
         {
             _logger = factory.CreateLogger<HomeController>();
             _env = env;
-            _sharedLocalizer = sharedLocalizer;
         }
 
+        [AllowAnonymous]
         public IActionResult Index()
         {
             if (SetupHelper.IsDbCreateComplete && SetupHelper.IsAdminCreateComplete)
             {
-                if(GlobalContext.SetupConfig == null)
+                if (GlobalContext.SetupConfig == null)
                 {
                     GlobalContext.SetupConfig = SetupHelper.LoadSetup();
                 }
@@ -55,7 +58,7 @@ namespace NetCoreCMS.Web.Controllers
 
                 if (setupConfig == null)
                 {
-                    TempData["Message"] = "Setup config file is missed. Please reinstall.";
+                    TempData["ErrorMessage"] = "Setup config file is missed. Please reinstall.";
                     return Redirect("~/CmsHome/ResourceNotFound");
                 }
                 if (setupConfig.StartupData.Trim('/') == "" || setupConfig.StartupData.Trim().ToLower() == "/home")
@@ -63,30 +66,30 @@ namespace NetCoreCMS.Web.Controllers
                     return View();
                 }
 
-                var langEnabledUrl = NccUrlHelper.AddLanguageToUrl( CurrentLanguage, NccUrlHelper.EncodeUrl(setupConfig.StartupUrl));
+                var langEnabledUrl = NccUrlHelper.AddLanguageToUrl(CurrentLanguage, NccUrlHelper.EncodeUrl(setupConfig.StartupUrl));
 
-                return Redirect( langEnabledUrl);
+                return Redirect(langEnabledUrl);
             }
             return Redirect("/SetupHome/Index");
         }
 
-       
-
-        public ActionResult About()
-        {
-            ViewBag.Message = _sharedLocalizer["About"];
-            return View();
-        }
-
+        [AllowAnonymous]
         public IActionResult Error()
         {
             return View();
         }
 
+        [AllowAnonymous]
+        public IActionResult NotAuthorized()
+        {
+            return View();
+        }
+
+        [AllowAnonymous]
         public ActionResult RedirectToDefaultLanguage()
         {
             var lang = CurrentLanguage;
-            var redirectUrl = Request.Path.Value+""+Request.QueryString;
+            var redirectUrl = Request.Path.Value + "" + Request.QueryString;
             if (Request.Path.Value.StartsWith("/en") || Request.Path.Value.StartsWith("/bn"))
             {
                 return Redirect("~" + redirectUrl);
@@ -94,7 +97,8 @@ namespace NetCoreCMS.Web.Controllers
             return Redirect("~/" + lang + redirectUrl);
         }
 
-        [HttpPost]
+        //[HttpPost]
+        [AllowAnonymous]
         public IActionResult SetLanguage(string culture, string returnUrl)
         {
             culture = culture.ToLower();
@@ -110,7 +114,7 @@ namespace NetCoreCMS.Web.Controllers
             {
                 if (!IsContainsLangPrefix(returnUrl))
                 {
-                    returnUrl =  culture + returnUrl;
+                    returnUrl = culture + returnUrl;
                 }
 
                 if (!IsStartedWithCurrentCulture(returnUrl, culture))
@@ -124,11 +128,11 @@ namespace NetCoreCMS.Web.Controllers
                         returnUrl = returnUrl.Substring(2);
                     }
 
-                    returnUrl =  culture + returnUrl;
+                    returnUrl = culture + returnUrl;
                 }
             }
 
-            if(returnUrl.StartsWith("/") == false)
+            if (returnUrl.StartsWith("/") == false)
             {
                 returnUrl = "/" + returnUrl;
             }
@@ -140,7 +144,7 @@ namespace NetCoreCMS.Web.Controllers
 
         private bool IsStartedWithCurrentCulture(string returnUrl, string culture)
         {
-            if (returnUrl.ToLower().StartsWith(culture) || returnUrl.ToLower().StartsWith("/"+culture))
+            if (returnUrl.ToLower().StartsWith(culture) || returnUrl.ToLower().StartsWith("/" + culture))
             {
                 return true;
             }
@@ -151,28 +155,33 @@ namespace NetCoreCMS.Web.Controllers
         {
             foreach (var item in SupportedCultures.Cultures)
             {
-                if (returnUrl.ToLower().StartsWith(item.TwoLetterISOLanguageName.ToLower()) || returnUrl.ToLower().StartsWith("/"+item.TwoLetterISOLanguageName.ToLower()) )
+                if (returnUrl.ToLower().StartsWith(item.TwoLetterISOLanguageName.ToLower()) || returnUrl.ToLower().StartsWith("/" + item.TwoLetterISOLanguageName.ToLower()))
                     return true;
             }
             return false;
         }
 
+        [AllowAnonymous]
         public async System.Threading.Tasks.Task<ActionResult> SetupSuccess()
         {
-            Program.RestartAppAsync();
+            string referer = Request.Headers["Referer"].ToString();
+            if (referer.EndsWith("/SetupHome/CreateAdmin"))
+            {
+                Program.RestartAppAsync();
+            }
             return View();
         }
 
-        [Authorize(Roles = "SuperAdmin,Administrator")]
+        [Authorize(Roles = "SuperAdmin")]
         public async System.Threading.Tasks.Task<IActionResult> RestartHost()
         {
-            //TODO: need to secure this restart.
             string referer = Request.Headers["Referer"].ToString();
             NetCoreCmsHost.IsRestartRequired = true;
             Program.RestartAppAsync();
             NetCoreCmsHost.IsRestartRequired = false;
             ViewBag.ReturnUrl = referer;
             ViewBag.ReturnUrlName = referer;
+
             if (referer.Trim() == "" || referer.Contains("RestartHost"))
             {
                 ViewBag.ReturnUrl = "/";
@@ -181,29 +190,14 @@ namespace NetCoreCMS.Web.Controllers
             return View();
         }
 
+        [AllowAnonymous]
         public IActionResult ResourceNotFound()
         {
             if (_env.IsDevelopment())
             {
-                ViewData["Message"] = "<strong style='color:black;font-family:Monda;'>Possible steps you may try:</strong><br/> 1. Build the modules after change. <br/>2. Restart <br/>3. Delete setup.json and setup the CMS again.";
+                ViewData["ErrorMessage"] = "<strong style='color:black;font-family:Monda;'>Possible steps you may try:</strong><br/> 1. Build the modules after change. <br/>2. Restart <br/>3. Delete setup.json and setup the CMS again.";
             }
             return View();
         }
-
-        public ActionResult Temp()
-        {
-            GlobalMessageRegistry.RegisterMessage(
-                new GlobalMessage() {
-                    For = GlobalMessage.MessageFor.Both,
-                    MessageId = Guid.NewGuid().ToString(),
-                    Registrater = "Web",
-                    Text = "Registered message from website",
-                    Type = GlobalMessage.MessageType.Info,
-                    ForUsers = new List<string>() { "admin"}
-                }, new TimeSpan(0, 10, 0)
-            );
-            return View();
-        }
-
     }
 }

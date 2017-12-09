@@ -18,6 +18,7 @@ using Microsoft.Extensions.Logging;
 using NetCoreCMS.Framework.Core;
 using NetCoreCMS.Framework.Core.Models;
 using NetCoreCMS.Framework.Core.Models.ViewModels;
+using NetCoreCMS.Framework.Core.Mvc.Attributes;
 using NetCoreCMS.Framework.Core.Mvc.Controllers;
 using NetCoreCMS.Framework.Core.Mvc.Models;
 using NetCoreCMS.Framework.Core.Network;
@@ -36,8 +37,7 @@ using System.Linq;
 
 namespace NetCoreCMS.Core.Modules.Admin.Controllers
 {
-    [Authorize(Roles = "SuperAdmin,Administrator")]
-    [AdminMenu(Name = "Settings", IconCls = "fa-cogs", Order = 99)]
+    [AdminMenu(Name = "Settings", IconCls = "fa-cogs", Order = 7)]
     public class AdminController : NccController
     {
         NccWebSiteService _webSiteService;
@@ -51,9 +51,11 @@ namespace NetCoreCMS.Core.Modules.Admin.Controllers
         IHostingEnvironment _hostingEnvironment;
         IConfiguration _configuration;
         NccModuleService _moduleService;
+        private readonly NccUserService _nccUserService;
+        private readonly NccPermissionService _nccPermissionService;
 
         public AdminController(NccWebSiteService nccWebSiteService, NccPageService pageService, NccPostService postService, NccCategoryService categoryService, NccSettingsService settingsService, RoleManager<NccRole> roleManager, UserManager<NccUser> userManager, NccStartupService startupService, IConfiguration configuration, IHostingEnvironment hostingEnv,
-        NccModuleService moduleService, ILoggerFactory loggarFactory)
+        NccModuleService moduleService, ILoggerFactory loggarFactory, NccUserService nccUserService, NccPermissionService nccPermissionService)
         {
             _webSiteService = nccWebSiteService;
             _pageService = pageService;
@@ -66,28 +68,14 @@ namespace NetCoreCMS.Core.Modules.Admin.Controllers
             _configuration = configuration;
             _hostingEnvironment = hostingEnv;
             _moduleService = moduleService;
+            _nccUserService = nccUserService;
+            _nccPermissionService = nccPermissionService;
             _logger = loggarFactory.CreateLogger<AdminController>();
         }
-
-        [Authorize]
-        //[AdminMenuItem(Name = "Dashboard", Url = "/Admin", IconCls = "fa-dashboard", Order = 1)]
+        
+        [AdminMenuItem(IsVisible = false, Name = "Dashboard", IconCls = "fa-dashboard", Order = 1)]
         public ActionResult Index()
         {
-            //var webSite = new NccWebSite();
-            //var webSites = _webSiteService.LoadAll();
-
-            //if (webSites != null && webSites.Count > 0)
-            //{
-            //    webSite = webSites.FirstOrDefault();
-            //}
-            //ViewBag.TotalPublishedPage = _pageService.LoadAllByPageStatus(NccPage.NccPageStatus.Published).Count();
-            //ViewBag.TotalPage = _pageService.LoadAll(true).Count();
-            //ViewBag.TotalPublishedPost = _postService.TotalPublishedPostCount();
-            //ViewBag.TotalPost = _postService.LoadAll(true).Count();
-            //ViewBag.TotalUser = _userManager.Users.Count();
-            //ViewBag.TotalModule = _moduleService.LoadAll().Count();
-            //ViewBag.TotalTheme = GlobalConfig.Themes.Count();
-            //return View(webSite);
             return RedirectToAction("Index", "Dashboard", new { });
         }
 
@@ -96,11 +84,6 @@ namespace NetCoreCMS.Core.Modules.Admin.Controllers
         [AdminMenuItem(Name = "General", Url = "/Admin/Settings", IconCls = "fa-gear", Order = 2)]
         public ActionResult Settings()
         {
-            //var webSites = _webSiteService.LoadAll();
-            //var cultures = SupportedCultures.Cultures;
-            //ViewBag.Languages = new SelectList(cultures.Select(x => new { Value = x.TwoLetterISOLanguageName.ToLower(), Text = x.NativeName.ToString() }).ToList(), "Value", "Text", SetupHelper.Language);
-            //ViewBag.CurrentLanguage = CurrentLanguage;            
-
             NccWebSite webSite = _webSiteService.LoadAll().FirstOrDefault();
             if (webSite.WebSiteInfos.Count <= 0)
             {
@@ -129,22 +112,21 @@ namespace NetCoreCMS.Core.Modules.Admin.Controllers
         [HttpPost]
         public ActionResult Settings(NccWebSite website)
         {
-            ViewBag.MessageType = "ErrorMessage";
-            ViewBag.Message = "Error occoured. Please fill up all field correctly.";
-
+            bool isSuccess = false;
+            string returnMessage = "Error occoured. Please fill up all field correctly.";
             bool isMultiLanguageChange = GlobalContext.WebSite.IsMultiLangual == website.IsMultiLangual ? false : true;
 
             if (ModelState.IsValid)
             {
                 NccWebSite prevWebSite = _webSiteService.Get(website.Id, true);
-                bool isSuccess = true;
+                isSuccess = true;
 
                 #region For default language
                 var defaultLangDetails = website.WebSiteInfos.Where(x => x.Language == GlobalContext.WebSite.Language).FirstOrDefault();
                 if (defaultLangDetails == null)
                 {
                     isSuccess = false;
-                    ViewBag.Message = "Default language data can't be null";
+                    returnMessage = "Default language data can't be null";
                 }
                 else
                 {
@@ -152,7 +134,7 @@ namespace NetCoreCMS.Core.Modules.Admin.Controllers
                     if (string.IsNullOrEmpty(defaultLangDetails.SiteTitle))
                     {
                         isSuccess = false;
-                        ViewBag.Message = "Default language Title can't be null";
+                        returnMessage = "Default language Title can't be null";
                     }
                 }
                 #endregion
@@ -170,7 +152,7 @@ namespace NetCoreCMS.Core.Modules.Admin.Controllers
                         if (string.IsNullOrEmpty(item.SiteTitle))
                         {
                             isSuccess = false;
-                            ViewBag.Message = "Title can't be null for language " + item.Language;
+                            returnMessage = "Title can't be null for language " + item.Language;
                         }
                     }
                 }
@@ -195,12 +177,11 @@ namespace NetCoreCMS.Core.Modules.Admin.Controllers
                     SetupHelper.Language = website.Language;
                     SetupHelper.SaveSetup();
 
-                    ViewBag.MessageType = "SuccessMessage";
-                    ViewBag.Message = "Page updated successful";
+                    returnMessage = "Page updated successful";
                     //var successMessage = "Settings updated successfully";
                     if (isMultiLanguageChange)
                     {
-                        ViewBag.Message += ". You must <a href=\"/Home/RestartHost\">restart</a> the site.";
+                        returnMessage += ". You must <a href=\"/Home/RestartHost\">restart</a> the site.";
                         //TempData["SuccessMessage"] = "You must <a href=\"/Home/RestartHost\">restart</a> the site.";
                         //successMessage += ". You must <a href=\"/Home/RestartHost\">restart</a> the site.";
                         //GlobalConfig.WebSite.IsMultiLangual = false;
@@ -212,7 +193,7 @@ namespace NetCoreCMS.Core.Modules.Admin.Controllers
             else
             {
                 //ModelState.AddModelError("Name", "Please check all values and submit again.");
-                ViewBag.Message = string.Join("; ", ModelState.Values.SelectMany(x => x.Errors).Select(x => x.ErrorMessage));
+                returnMessage = string.Join("; ", ModelState.Values.SelectMany(x => x.Errors).Select(x => x.ErrorMessage));
             }
 
             //var cultures = SupportedCultures.Cultures;
@@ -231,6 +212,10 @@ namespace NetCoreCMS.Core.Modules.Admin.Controllers
                     }
                 }
             }
+            if (isSuccess)
+                ShowMessage(returnMessage, Framework.Core.Mvc.Views.MessageType.Success);
+            else
+                ShowMessage(returnMessage, Framework.Core.Mvc.Views.MessageType.Error);
             return View(website);
         }
 
@@ -244,7 +229,7 @@ namespace NetCoreCMS.Core.Modules.Admin.Controllers
         [AdminMenuItem(Name = "Email", Url = "/Admin/EmailSettings", IconCls = "fa-envelope", Order = 4)]
         public ActionResult EmailSettings()
         {
-            var model = _settingsService.GetByKey<SmtpSettings>(Constants.SMTPSettingsKey);
+            var model = _settingsService.GetByKey<SmtpSettings>();
             if (model == null)
                 model = new SmtpSettings();
             return View(model);
@@ -256,8 +241,8 @@ namespace NetCoreCMS.Core.Modules.Admin.Controllers
             if (ModelState.IsValid)
             {
                 model.UseSSL = UseSSL;
-                var settings = _settingsService.SetByKey<SmtpSettings>(Constants.SMTPSettingsKey, model);
-                TempData["SuccessMessage"] = "Settings save successful.";
+                var settings = _settingsService.SetByKey<SmtpSettings>(model);
+                ShowMessage("Settings save successful.", Framework.Core.Mvc.Views.MessageType.Success);
             }
             return View(model);
         }
@@ -289,50 +274,46 @@ namespace NetCoreCMS.Core.Modules.Admin.Controllers
 
         }
 
-        [HttpPost]
-        public ActionResult Logging(int logLevelValue, string logFileName, string operation)
+        public ActionResult SetLogLevel(int logLevel)
         {
-            if (operation == "SetLog")
-            {
-                SetupHelper.LoadSetup();
-                SetupHelper.LoggingLevel = logLevelValue;
-                SetupHelper.SaveSetup();
-                TempData["SuccessMessage"] = "Log Levels save successful. <a href='/Home/RestartHost'> Restart Site</a> for change effect.";
-            }
-            else
-            {
-                if (!string.IsNullOrEmpty(logFileName))
+            SetupHelper.LoadSetup();
+            SetupHelper.LoggingLevel = logLevel;
+            SetupHelper.SaveSetup();            
+            ShowMessage("Log Levels save successful. <a href='/Home/RestartHost'> Restart Site</a> for change effect.",Framework.Core.Mvc.Views.MessageType.Success);
+            return RedirectToAction("Logging");
+        }
+
+        
+        [ResponseCache(Duration = 30, VaryByQueryKeys = new string[] { "logFileName" })]
+        public FileResult DownloadLogFile(string logFileName)
+        { 
+            var dict = new Dictionary<string, string>();
+            var logFolderPath = GlobalContext.ContentRootPath + "\\" + NccInfo.LogFolder;
+
+            MemoryStream zipStream = new MemoryStream();
+            using (ZipArchive zip = new ZipArchive(zipStream, ZipArchiveMode.Create, true))
+            { 
+                try
                 {
-                    try
-                    {
-                        var logFilePath = GlobalContext.ContentRootPath + "\\" + NccInfo.LogFolder + "\\" + logFileName;
-                        var originalFileStream = System.IO.File.Open(logFilePath, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite);
-                        MemoryStream zipStream = new MemoryStream();
-                        using (ZipArchive zip = new ZipArchive(zipStream, ZipArchiveMode.Create, true))
-                        {
-                            var zipEntry = zip.CreateEntry(logFileName);
-                            using (var writer = new StreamWriter(zipEntry.Open()))
-                            {
-                                originalFileStream.Seek(0, SeekOrigin.Begin);
-                                originalFileStream.CopyTo(writer.BaseStream);
-                            }
-                        }
-                        zipStream.Seek(0, SeekOrigin.Begin);
-                        return File(zipStream, "application/zip", logFileName + ".zip");
+                    var logFilePath = logFolderPath + "\\" + logFileName;
+                    var fi = new FileInfo(logFileName);                     
+                    var originalFileStream = System.IO.File.Open(logFilePath, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite);
+                    var zipEntry = zip.CreateEntry(fi.Name);
 
-                    }
-                    catch (Exception ex)
+                    using (var writer = new StreamWriter(zipEntry.Open()))
                     {
-                        TempData["ErrorMessage"] = ex.Message;
-                    }
-                    finally
-                    {
-
-                    }
+                        originalFileStream.Seek(0, SeekOrigin.Begin);
+                        originalFileStream.CopyTo(writer.BaseStream);
+                    } 
                 }
-            }
-            PrepareLogViewData();
-            return View();
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Loag download error ");
+                } 
+            } 
+
+            zipStream.Seek(0, SeekOrigin.Begin);
+            return File(zipStream, "application/zip", logFileName + ".zip");
         }
 
         private Dictionary<string, string> ListLogFiles()
@@ -348,6 +329,7 @@ namespace NetCoreCMS.Core.Modules.Admin.Controllers
             return dict;
         }
 
+        [ResponseCache(Duration = 30)]
         public FileResult DownloadAllLogs()
         {
             var dict = new Dictionary<string, string>();
@@ -372,7 +354,7 @@ namespace NetCoreCMS.Core.Modules.Admin.Controllers
                     }
                     catch (Exception ex)
                     {
-                        
+                        _logger.LogError(ex, "Loag download error ");
                     }
                 }
             }
@@ -401,12 +383,12 @@ namespace NetCoreCMS.Core.Modules.Admin.Controllers
                     var page = _pageService.Get(long.Parse(vmodel.PageId));
                     if (page == null)
                     {
-                        TempData["ErrorMessage"] = "Page not found.";
+                        ShowMessage("Page not found.", Framework.Core.Mvc.Views.MessageType.Error);
                     }
                     var pageDetails = page.PageDetails.Where(x => x.Language == GlobalContext.WebSite.Language).FirstOrDefault();
                     if (pageDetails == null)
                     {
-                        TempData["ErrorMessage"] = "Page for default language not found.";
+                        ShowMessage("Page for default language not found.", Framework.Core.Mvc.Views.MessageType.Error);                        
                     }
                     else
                     {
@@ -419,12 +401,12 @@ namespace NetCoreCMS.Core.Modules.Admin.Controllers
                     var post = _postService.Get(long.Parse(vmodel.PostId));
                     if (post == null)
                     {
-                        TempData["ErrorMessage"] = "Post not found.";
+                        ShowMessage("Post not found.", Framework.Core.Mvc.Views.MessageType.Error);
                     }
                     var postDetails = post.PostDetails.Where(x => x.Language == GlobalContext.WebSite.Language).FirstOrDefault();
                     if (postDetails == null)
                     {
-                        TempData["ErrorMessage"] = "Post for default language not found.";
+                        ShowMessage("Post for default language not found.", Framework.Core.Mvc.Views.MessageType.Error);
                     }
                     else
                     {
@@ -437,12 +419,12 @@ namespace NetCoreCMS.Core.Modules.Admin.Controllers
                     var category = _categoryService.Get(long.Parse(vmodel.CategoryId));
                     if (category == null)
                     {
-                        TempData["ErrorMessage"] = "Category not found.";
+                        ShowMessage("Category not found.", Framework.Core.Mvc.Views.MessageType.Error);
                     }
                     var categoryDetails = category.CategoryDetails.Where(x => x.Language == GlobalContext.WebSite.Language).FirstOrDefault();
                     if (categoryDetails == null)
                     {
-                        TempData["ErrorMessage"] = "Category for default language not found.";
+                        ShowMessage("Category for default language not found.", Framework.Core.Mvc.Views.MessageType.Error);
                     }
                     else
                     {
@@ -463,7 +445,7 @@ namespace NetCoreCMS.Core.Modules.Admin.Controllers
 
                 if (setupConfig.StartupData.Trim('/') == "" || setupConfig.StartupData.Trim().Trim('/').ToLower() == "home")
                 {
-                    TempData["ErrorMessage"] = "Incorrect value";
+                    ShowMessage("Incorrect value",Framework.Core.Mvc.Views.MessageType.Error);
                     return View(vmodel);
                 }
 
@@ -476,7 +458,7 @@ namespace NetCoreCMS.Core.Modules.Admin.Controllers
                 return View(vmodel);
             }
 
-            TempData["SuccessMessage"] = "Config save successful.";
+            ShowMessage("Config save successful.", Framework.Core.Mvc.Views.MessageType.Success);
             var model = PrepareStartupViewData();
             return View(model);
         }
@@ -486,14 +468,14 @@ namespace NetCoreCMS.Core.Modules.Admin.Controllers
             var setupConfig = SetupHelper.LoadSetup();
             var model = new StartupViewModel();
             var moduleSiteMenuList = new List<SiteMenuItem>();
-            var roleList = _roleManager.Roles.Select(x => new { Name = x.Name, Value = x.Id }).ToList();
+            var roleList = _nccPermissionService.LoadAll().Select(x => new { Name = x.Name, Value = x.Id }).ToList();
 
             model.Url = setupConfig.StartupUrl;
             model.StartupType = setupConfig.StartupType;
 
             //original was Slug , Title
             model.Pages = new SelectList(_pageService.LoadAll(true), "Id", "Name", setupConfig.StartupData);
-            model.Posts = new SelectList(_postService.LoadPublished(0,100), "Id", "Name", setupConfig.StartupData);
+            model.Posts = new SelectList(_postService.Load(0, 100, true, true), "Id", "Name", setupConfig.StartupData);
             model.Categories = new SelectList(_categoryService.LoadAll(true), "Id", "Name", setupConfig.StartupData);
             NccMenuHelper.GetModulesSiteMenus().Select(x => x.Value).ToList().ForEach(x => moduleSiteMenuList.AddRange(x));
             model.ModuleSiteMenus = new SelectList(moduleSiteMenuList, "Url", "Url", setupConfig.StartupData);

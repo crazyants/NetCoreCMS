@@ -17,6 +17,7 @@ using System.Collections.Generic;
 
 namespace NetCoreCMS.Framework.Core.Models
 {
+    [Serializable]
     public class NccUser : IdentityUser<long>, IBaseModel<long>
     {
         public NccUser()
@@ -55,5 +56,10 @@ namespace NetCoreCMS.Framework.Core.Models
         /// Navigation property for this users login accounts.
         /// </summary>
         public virtual ICollection<IdentityUserLogin<long>> Logins { get; } = new List<IdentityUserLogin<long>>();
+
+        public virtual List<NccUserPermission> Permissions { get; set; } = new List<NccUserPermission>();
+        public virtual List<NccPermissionDetails> ExtraPermissions { get; set; } = new List<NccPermissionDetails>();
+        public virtual List<NccPermissionDetails> ExtraDenies { get; set; } = new List<NccPermissionDetails>();
+
     }
 }

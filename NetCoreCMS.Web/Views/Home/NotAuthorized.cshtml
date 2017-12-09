@@ -1,0 +1,32 @@
+﻿ 
+@{ 
+    Title = "Not Authorized";
+    Layout = "_SimpleLayout";
+}
+<style>
+    #container {
+        margin-top: 20vh;
+        height: 80vh;
+        text-align: center;
+        color: white;
+    }
+</style>
+
+<div id="container">
+    <h1>Permission Denied</h1>
+
+    @if (TempData.Keys.Contains("SuccessMessage"))
+    {
+        <div class="alert alert-success">
+            <h3>@TempData["SuccessMessage"]</h3>
+        </div>
+    }
+    @if (TempData.Keys.Contains("ErrorMessage"))
+    {
+        <div class="alert alert-danger">
+            <h3>@TempData["ErrorMessage"]</h3>
+        </div>
+    }
+
+    <h5><a href="/CmsHome">Go back to Home</a></h5>
+</div>

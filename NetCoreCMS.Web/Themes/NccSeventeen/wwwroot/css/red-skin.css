@@ -110,7 +110,10 @@ body {
         background-color: #ad140c;
     }
 
-.selectLanguage select {
+
+
+/*Language dropdown start*/
+/*.selectLanguage select {
     background-color: #ad140c;
     border-color: #d81910;
     color: #FFF;
@@ -126,7 +129,21 @@ body {
         background-color: #ad140c;
         border-color: #d81910;
         color: #FFF;
-    }
+    }*/
+.dropbtn {
+    background-color: transparent;
+    color: white;
+}
+
+.dropdown-content a:hover {
+    background-color: #d81910;
+}
+
+.dropdown:hover .dropbtn {
+    background-color: #d81910;
+}
+/*Language dropdown end*/
+
 
 footer {
     background-color: #d81910;
@@ -177,4 +194,20 @@ footer a {
     .panel-default .panel-footer {
         color: #FFF;
         background-color: #f7160b;
+    }
+
+.btn-primary {
+    color: #FFF;
+    background-color: #ad140c;
+    border-color: #ad140c;
+}
+    .btn-primary:hover {
+        color: #FFF;
+        background-color: #f7160b;
+        border-color: #f7160b;
+    }
+    .btn-primary:focus {
+        color: #FFF;
+        background-color: #f7160b;
+        border-color: #f7160b;
     }

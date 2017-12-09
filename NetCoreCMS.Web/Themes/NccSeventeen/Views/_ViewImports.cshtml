@@ -1,5 +1,6 @@
-﻿@inject Microsoft.ApplicationInsights.AspNetCore.JavaScriptSnippet JavaScriptSnippet
+﻿@inherits NccRazorPage<TModel>
 
+@using NetCoreCMS.Framework.Themes
 @using NetCoreCMS.Framework.Core
 @using Microsoft.AspNetCore.Identity
 @using NetCoreCMS.Framework.Utility
@@ -9,13 +10,18 @@
 @using NetCoreCMS.Framework.Themes
 @using NetCoreCMS.Framework.Core.Mvc.Views
 @using NetCoreCMS.Framework.Core.Mvc.Views.Extensions
-@using NetCoreCMS.Themes.NccSeventeen.Lib
 @using Microsoft.Extensions.Localization
 @using NetCoreCMS.Framework.i18n
+
+@using NetCoreCMS.Themes.NccSeventeen.Lib
 
 @addTagHelper *, NetCoreCMS.Framework
 @addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
 
+@inject Microsoft.ApplicationInsights.AspNetCore.JavaScriptSnippet JavaScriptSnippet
 @inject SignInManager<NccUser> SignInManager
 @inject UserManager<NccUser> UserManager
 @inject NccLanguageDetector LanguageDetector
+
+
+

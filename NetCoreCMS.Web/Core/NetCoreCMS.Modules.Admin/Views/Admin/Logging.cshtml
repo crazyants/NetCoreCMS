@@ -2,13 +2,13 @@
 
 @{
     Layout = Constants.AdminLayoutName;
-    ViewData["PageTitle"] = "Logging";
-    ViewData["PageSubtitle"] = "Set Log Level and Download Log";
+    Title = "Logging";
+    SubTitle = "Set Log Level and Download Log";
 }
 
 <div class="row">
     <div class="col-sm-12">
-        <form id="logForm" class="form-horizontal" asp-controller="Admin" asp-action="Logging" method="post">
+        <form id="logForm" class="form-horizontal" asp-controller="Admin" asp-action="DownloadLogFile" method="get">
             <input type="hidden" id="operation" name="operation"/>
             <div class="form-group">
                 <div class="row">
@@ -16,7 +16,7 @@
                         <label>Log Level: </label>
                     </div>
                     <div class="col-sm-5">
-                        <select name="logLevelValue" asp-items="@( new SelectList(ViewBag.LogLevels, "Value","Key", ViewBag.LogLevel))" onchange="SubmitForm()" class="form-control"></select>
+                        <select name="logLevel" asp-items="@( new SelectList(ViewBag.LogLevels, "Value","Key", ViewBag.LogLevel))" onchange="SubmitForm()" class="form-control"></select>
                     </div>
                 </div>                                                
             </div>
@@ -58,6 +58,7 @@
 <script>
     function SubmitForm() {
         $("#operation").val("SetLog");
-        $("#logForm").submit();
+        $("#logForm").attr("action", "SetLogLevel");
+        $("#logForm").submit();        
     }
 </script>

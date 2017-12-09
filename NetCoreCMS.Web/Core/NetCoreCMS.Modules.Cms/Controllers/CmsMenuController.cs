@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Extensions.Logging;
 using NetCoreCMS.Framework.Core.Models;
+using NetCoreCMS.Framework.Core.Mvc.Attributes;
 using NetCoreCMS.Framework.Core.Mvc.Controllers;
 using NetCoreCMS.Framework.Core.Network;
 using NetCoreCMS.Framework.Core.Services;
@@ -29,8 +30,7 @@ using System.Text;
 
 namespace NetCoreCMS.Core.Modules.Cms.Controllers
 {
-    [Authorize(Roles = "SuperAdmin,Administrator")]
-    [AdminMenu(Name = "Appearance", IconCls = "fa-tasks", Order = 5)]
+    [AdminMenu(Name = "Appearance", IconCls = "fa-tasks", Order = 40)]
     public class CmsMenuController : NccController
     {
         #region Initialization
@@ -61,7 +61,7 @@ namespace NetCoreCMS.Core.Modules.Cms.Controllers
         #endregion
 
         #region Operations
-        [AdminMenuItem(Name = "Menu", Url = "/CmsMenu", IconCls = "fa-list", Order = 1)]
+        [AdminMenuItem(Name = "Menu", Url = "/CmsMenu", IconCls = "fa-list", SubActions = new string[] { "CreateEditMenu", "DeleteMenu", "LoadPages", "LoadPosts", "LoadCategories", "LoadModules", "LoadTags" }, Order = 1)]
         public ActionResult Index(bool isManage = false, long menuId = 0)
         {
             AddCmsMenuViewData();

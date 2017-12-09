@@ -21,12 +21,12 @@ using System.Linq;
 using NetCoreCMS.Framework.Core.Network;
 using NetCoreCMS.Framework.Core.Mvc.Models;
 using NetCoreCMS.Framework.Themes;
+using NetCoreCMS.Framework.Core.Mvc.Attributes;
 
 namespace NetCoreCMS.Core.Modules.Blog.Controllers
 {
-    [Authorize(Roles = "SuperAdmin,Administrator,Editor")]
     [SiteMenu(IconCls = "fa-newspaper-o", Name = "Blog", Order = 100)]
-    [AdminMenu(IconCls = "fa-newspaper-o", Name = "Blog", Order = 5)]
+    [AdminMenu(IconCls = "fa-newspaper-o", Name = "Blog", Order = 1)]
     public class BlogController : NccController
     {
         NccPostService _nccPostService;

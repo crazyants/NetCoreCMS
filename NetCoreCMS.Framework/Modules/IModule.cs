@@ -17,6 +17,7 @@ using NetCoreCMS.Framework.Core.Services;
 using Microsoft.AspNetCore.Routing;
 using NetCoreCMS.Framework.Core.Data;
 using NetCoreCMS.Framework.Core.Models;
+using NetCoreCMS.Framework.Core.Models.ViewModels;
 
 namespace NetCoreCMS.Framework.Modules
 {
@@ -26,6 +27,7 @@ namespace NetCoreCMS.Framework.Modules
         /// Unique Module ID
         /// </summary>
         string ModuleId { get; set; }
+        bool IsCore { get; set; }
         /// <summary>
         /// Description: Module name must be same as module folder name.
         /// </summary>
@@ -50,9 +52,10 @@ namespace NetCoreCMS.Framework.Modules
         string SortName { get; set; }
         string Path { get; set; }
         string Folder { get; set; }
+        string TablePrefix { get; set; }
         int ModuleStatus { get; set; }
         List<Widget> Widgets { get; set; }
-        
+        List<Menu> Menus { get; set; }
         void Init(IServiceCollection services);
         void RegisterRoute(IRouteBuilder routes);
         bool Install(NccSettingsService settingsService, Func<NccDbQueryText, string> executeQuery);

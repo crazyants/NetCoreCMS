@@ -110,7 +110,8 @@ body {
         background-color: #324191;
     }
 
-.selectLanguage select {
+/*Language dropdown start*/
+/*.selectLanguage select {
     background-color: #324191;
     border-color: #3f51b5;
     color: #FFF;
@@ -126,7 +127,19 @@ body {
         background-color: #324191;
         border-color: #3f51b5;
         color: #FFF;
-    }
+    }*/
+.dropbtn {
+    background-color: transparent;
+    color: white;
+}
+.dropdown-content a:hover {
+    background-color: #3f51b5;
+}
+
+.dropdown:hover .dropbtn {
+    background-color: #3f51b5;
+}
+/*Language dropdown end*/
 
 footer {
     background-color: #3f51b5;
@@ -183,3 +196,20 @@ footer a {
         color: #FFF;
         background-color: #3f51b5;
     }
+
+.btn-primary {
+    color: #FFF;
+    background-color: #324191;
+    border-color: #324191;
+}
+    .btn-primary:hover {
+        color: #FFF;
+        background-color: #3f51b5;
+        border-color: #3f51b5;
+    }
+    .btn-primary:focus {
+        color: #FFF;
+        background-color: #3f51b5;
+        border-color: #3f51b5;
+    }
+

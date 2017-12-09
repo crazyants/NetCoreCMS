@@ -14,7 +14,7 @@ using NetCoreCMS.Framework.Core.Data;
 
 namespace NetCoreCMS.Framework.Core.Models
 {
-    public class CoreModelBuilder : INccModuleBuilder
+    public class CoreModelBuilder : IModelBuilder
     {
         public void Build(ModelBuilder modelBuilder)
         {
@@ -145,13 +145,16 @@ namespace NetCoreCMS.Framework.Core.Models
             modelBuilder.Entity<NccStartup>(b => {
                 b.ToTable("Ncc_Startup");
                 //b.HasOne(p => p.User);
-                b.HasOne(p => p.Role);                
+                b.HasOne(p => p.Permission);                
             });
              
             modelBuilder.Entity<NccUser>(b =>
             {
+                b.ToTable("Ncc_User");
                 b.HasMany(ur => ur.Roles);
-                b.ToTable("Ncc_User");             
+                b.HasMany(w => w.ExtraPermissions);
+                b.HasMany(w => w.ExtraDenies);
+                b.HasMany(w => w.Permissions);
             });
 
             modelBuilder.Entity<NccUserRole>(b =>
@@ -164,20 +167,46 @@ namespace NetCoreCMS.Framework.Core.Models
 
             modelBuilder.Entity<NccWebSite>(b => {
                 b.ToTable("Ncc_WebSite");
-                b.HasMany<NccWebSiteInfo>(w => w.WebSiteInfos);
+                b.HasMany(w => w.WebSiteInfos);
+                b.Property(p => p.EnableCache).HasDefaultValue(false);
             });
 
             modelBuilder.Entity<NccWebSiteInfo>().ToTable("Ncc_WebSite_Info");
+
+            modelBuilder.Entity<NccPermission>(b => {
+                b.ToTable("Ncc_Permission");
+                b.HasMany( x=> x.Users );
+                b.HasMany(x => x.PermissionDetails);
+            });
+
+            modelBuilder.Entity<NccPermissionDetails>(b => {
+                b.ToTable("Ncc_Permission_Details");
+                b.Property(x => x.ExtraAllowUserId).IsRequired(false);
+                b.Property(x => x.ExtraDenyUserId).IsRequired(false);
+                b.Property(x => x.PermissionId).IsRequired(false);
+
+                b.HasOne(w => w.Permission).WithMany(u=>u.PermissionDetails).HasForeignKey(y=>y.PermissionId);
+                b.HasOne(w => w.DenyUser).WithMany(x => x.ExtraDenies).HasForeignKey(y => y.ExtraDenyUserId);
+                b.HasOne(w => w.AllowUser).WithMany(x => x.ExtraPermissions).HasForeignKey(y => y.ExtraAllowUserId);                
+            });
+
+            modelBuilder.Entity<NccUserPermission>(b => {
+                b.HasKey(up => new { up.UserId, up.PermissionId });
+                b.ToTable("Ncc_User_Permission");
+                b.HasOne(w => w.User).WithMany( u => u.Permissions ).HasForeignKey(x=>x.UserId);
+                b.HasOne(w => w.Permission).WithMany( u => u.Users ).HasForeignKey(x=>x.PermissionId);
+            });
 
             modelBuilder.Entity<NccWebSiteWidget>(b => {
                 b.ToTable("Ncc_WebSite_Widget");
                 b.HasOne(w => w.WebSite);
             });
+
             modelBuilder.Entity<NccWidget>().ToTable("Ncc_Widget");
             modelBuilder.Entity<NccWidgetSection>(b => {
                 b.ToTable("Ncc_Widget_Sections");
-
             });
+
             modelBuilder.Entity<IdentityUserClaim<long>>(b =>
             {
                 b.HasKey(uc => uc.Id);
